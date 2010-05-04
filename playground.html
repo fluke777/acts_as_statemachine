@@ -1,0 +1,219 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+  "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <title>Playground</title>
+    
+  </head>
+  <body>
+    
+    
+    <script type="text/javascript" src="http://yui.yahooapis.com/combo?3.1.0/build/yui/yui-min.js&3.1.0/build/oop/oop-min.js&3.1.0/build/event-custom/event-custom-min.js&3.1.0/build/attribute/attribute-min.js"></script>
+    <script type="text/javascript" src="acts_as_statemachine.js" charset="utf-8"></script>
+      
+    
+    <script type="text/javascript" charset="utf-8">
+      YUI().use('event', 'acts_as_statemachine', function(Y) {
+        y = Y
+          Y.log('Found node.. Setting style');
+          
+          
+          UNVERIFIED  = "unverified",
+          ACTIVE      = "active",
+          DELETED     = "deleted",
+          EXPIRED     = "expired",
+          AWAITING    = "awaiting",
+          CANCELLED   = "cancelled",
+          ACCEPTED    = "accepted",
+          FAILED      = "failed"
+      
+        User = function(userValues) {
+        
+          this.addState(UNVERIFIED)
+          this.addState(ACTIVE)
+          this.addState(DELETED)
+          this.addState(EXPIRED)
+        
+          this.addEvent("verify", function(event) {
+            event.transition({from: UNVERIFIED, to: ACTIVE});
+          })
+        
+          this.addEvent("expire", function(event) {
+            event.transition({from: UNVERIFIED, to: EXPIRED});
+          })
+        
+          this.addEvent("closeAccount", function(event) {
+            event.transition({from: UNVERIFIED, to: DELETED});
+            event.transition({from: ACTIVE, to: DELETED});
+          })
+        
+          var attributeConfig = {
+            firstName: {
+              value: undefined
+            },
+            lastName: {
+              value: undefined
+            }
+          };
+          this.addAttrs(attributeConfig);
+          this.setAttrs(userValues)
+        
+        }
+      
+        Y.augment(User, Y.ActsAsStateMachine)
+      
+        Registration = function(userValues) {
+        
+          this.addState(AWAITING)
+          this.addState(ACCEPTED)
+          this.addState(CANCELLED)
+          this.addState(EXPIRED)
+          this.addState(FAILED)
+        
+          this.addEvent("resend", function(event) {
+            event.transition({from: AWAITING, to: AWAITING});
+          })
+        
+          this.addEvent("cancel", function(event) {
+            event.transition({from: AWAITING, to: CANCELLED});
+          })
+        
+          this.addEvent("expire", function(event) {
+            event.transition({from: AWAITING, to: EXPIRED});
+          })
+        
+          this.addEvent("accept", function(event) {
+            event.transition({from: AWAITING, to: ACCEPTED});
+          })
+        
+          var attributeConfig = {
+            user: {
+                value: undefined
+            }
+          };
+          this.addAttrs(attributeConfig, userValues);
+          this.setAttrs(userValues)
+        
+        }
+      
+        Registration.prototype = {
+          awaiting_awaiting: function() {
+            console.log("Now I would send an email")
+          },
+        
+          awaiting_accepted: function() {
+            var user = this.get('user');
+            throw "Whatever"
+            user.verify()
+            console.log("User ", user.get('firstName'), "was accepted");
+          },
+        }
+      
+        Y.augment(Registration, Y.ActsAsStateMachine);
+      
+      
+        user = new User({
+          state:      UNVERIFIED,
+          firstName:  "Tomas",
+          lastName:   "Svarovsky"
+        });
+      
+        registration = new Registration({
+          state:  AWAITING,
+          user:   user
+        });
+    
+        Hamster = function(config) {
+          this.addState("hungry");
+          this.addState("nothungry");
+          this.addState("running");
+          this.addState("dead");
+
+          this.addEvent("feed", function(event) {
+            event.transition({from: 'hungry', to: 'nothungry'});
+          });
+
+          this.addEvent("starve", function(event) {
+            event.transition({from: 'nothungry', to: 'hungry'});
+            event.transition({from: 'running', to: 'hungry'});
+            event.transition({from: 'hungry', to: 'dead'});
+          });
+
+          this.addEvent("run", function(event) {
+            event.transition({from: 'nothungry', to: 'running'});
+            event.transition({from: 'running', to: 'running'});
+          });
+          
+          this.setAttrs(config);
+          this.startStarving()
+        }
+      
+        Hamster.prototype = {
+          startStarving: function() {
+            this.stomach = Y.later(5000, this, function() {
+              this.starve()
+            }, null, true)
+          },
+          
+          running_hungry: function() {
+            this.hungry();
+          },
+          nothungry_hungry: function() {
+            this.hungry();
+          },
+          hungry_dead: function() {
+            this.dead();
+            this.stomach.cancel();
+          },
+          
+          nothungry_running: function() {
+            this.running()
+          },
+          
+          running: function() {
+            Y.log("Runnning fast as hell")
+          },
+          hungry: function() {
+            Y.log("I am hungry, dont let me dieee")
+          },
+          dead: function() {
+            Y.log("I am dead, you bastard");
+          }
+        }
+        Y.augment(Hamster, Y.ActsAsStateMachine);
+      
+        marvin = new Hamster({
+          state: 'nothungry'
+        });
+      
+      
+        TwoStateSwitch = function() {
+          this.addState('on');
+          this.addState('off');
+
+          this.addEvent('toggle', function(event) {
+            event.transition({from: 'on', to: 'off'});
+            event.transition({from: 'off', to: 'on'});
+          })
+          
+          this.set('state', 'on');
+        }
+
+        TwoStateSwitch.prototype = {
+          on_off: function() {
+            Y.log("I just switched off");
+          },
+          off_on: function() {
+            Y.log("I just switched on");
+          }
+        }
+        Y.augment(TwoStateSwitch, Y.ActsAsStateMachine);
+        mySwitch = new TwoStateSwitch()
+    });
+    
+    
+    
+    </script>
+  </body>
+</html>
