@@ -104,7 +104,6 @@
         
           awaiting_accepted: function() {
             var user = this.get('user');
-            throw "Whatever"
             user.verify()
             console.log("User ", user.get('firstName'), "was accepted");
           },
@@ -123,93 +122,6 @@
           state:  AWAITING,
           user:   user
         });
-    
-        Hamster = function(config) {
-          this.addState("hungry");
-          this.addState("nothungry");
-          this.addState("running");
-          this.addState("dead");
-
-          this.addEvent("feed", function(event) {
-            event.transition({from: 'hungry', to: 'nothungry'});
-          });
-
-          this.addEvent("starve", function(event) {
-            event.transition({from: 'nothungry', to: 'hungry'});
-            event.transition({from: 'running', to: 'hungry'});
-            event.transition({from: 'hungry', to: 'dead'});
-          });
-
-          this.addEvent("run", function(event) {
-            event.transition({from: 'nothungry', to: 'running'});
-            event.transition({from: 'running', to: 'running'});
-          });
-          
-          this.setAttrs(config);
-          this.startStarving()
-        }
-      
-        Hamster.prototype = {
-          startStarving: function() {
-            this.stomach = Y.later(5000, this, function() {
-              this.starve()
-            }, null, true)
-          },
-          
-          running_hungry: function() {
-            this.hungry();
-          },
-          nothungry_hungry: function() {
-            this.hungry();
-          },
-          hungry_dead: function() {
-            this.dead();
-            this.stomach.cancel();
-          },
-          
-          nothungry_running: function() {
-            this.running()
-          },
-          
-          running: function() {
-            Y.log("Runnning fast as hell")
-          },
-          hungry: function() {
-            Y.log("I am hungry, dont let me dieee")
-          },
-          dead: function() {
-            Y.log("I am dead, you bastard");
-          }
-        }
-        Y.augment(Hamster, Y.ActsAsStateMachine);
-      
-        marvin = new Hamster({
-          state: 'nothungry'
-        });
-      
-      
-        TwoStateSwitch = function() {
-          this.addState('on');
-          this.addState('off');
-
-          this.addEvent('toggle', function(event) {
-            event.transition({from: 'on', to: 'off'});
-            event.transition({from: 'off', to: 'on'});
-          })
-          
-          this.set('state', 'on');
-        }
-
-        TwoStateSwitch.prototype = {
-          on_off: function() {
-            Y.log("I just switched off");
-          },
-          off_on: function() {
-            Y.log("I just switched on");
-          }
-        }
-        Y.augment(TwoStateSwitch, Y.ActsAsStateMachine);
-        mySwitch = new TwoStateSwitch()
     });
     
     
