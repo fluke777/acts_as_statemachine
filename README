@@ -28,7 +28,7 @@ Or you can create your own state machine.
     mySwitch = new TwoStateSwitch();
 
 
-Or try something more funny and more complex
+Or try something more funny and more complex (have a look into HungryHamster.png for quick look at the statechart)
 
 
     Hamster = function(config) {
